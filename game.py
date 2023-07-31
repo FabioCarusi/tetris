@@ -52,9 +52,21 @@ class Game:
 
         self.surface.blit(self.lines_surface, (0, 0))
 
+    def input(self):
+        keys= pygame.key.get_pressed()
+
+        if not self.timers['horizontal move'].active:
+            if keys[pygame.K_LEFT]:
+                self.tetronimo.move_orizontal(-1)
+                self.timers['horizontal move'].activate()
+            if keys[pygame.K_RIGHT]:
+                self.tetronimo.move_orizontal(+1)
+                self.timers['horizontal move'].activate()
+
     def run(self):
 
         # update
+        self.input()
         self.timer_update()
         self.sprites.update()
         
@@ -78,10 +90,27 @@ class Tetromino:
         self.blocks = [Block(group, pos, self.color)
                        for pos in self.block_position]
         # self.shape = choice([k for k in TETROMINOS ])
+    
+    # collision
 
+    def next_move_horizontal_collide(self, blocks, amount):
+        collision_list = [block.horizontal_collide(int(block.pos.x + amount)) for block in self.blocks]
+        return True if any(collision_list) else False
+    
+    def next_move_vertical_collide(self, blocks, amount):
+        collision_list = [block.vertical_collide(int(block.pos.y + amount)) for block in self.blocks]
+        return True if any(collision_list) else False
+
+    # movement 
     def move_down(self):
-        for blocks in self.blocks:
-            blocks.pos.y += 1
+        if not self.next_move_vertical_collide(self.blocks, 1):
+            for blocks in self.blocks:
+                blocks.pos.y += 1
+
+    def move_orizontal(self, amount):
+        if not self.next_move_horizontal_collide(self.blocks, amount):
+            for blocks in self.blocks:
+                blocks.pos.x += amount
 
 
 class Block(pygame.sprite.Sprite):
@@ -93,8 +122,15 @@ class Block(pygame.sprite.Sprite):
 
         # position
         self.pos = pygame.Vector2(pos) + BLOCK_OFFSET
-    
         self.rect = self.image.get_rect(topleft=self.pos * CELL_SIZE)
+
+    def horizontal_collide(self, x):
+        if not 0 <= x < COLUMNS:
+            return True
+    
+    def vertical_collide(self, y):
+        if y >= ROWS:
+            return True
 
     def update(self):
         self.rect.topleft = self.pos * CELL_SIZE
