@@ -6,14 +6,14 @@ from game import Game
 from score import Score
 from preview import Preview
 
+
 class Main:
     def __init__(self):
-
-        #general
+        # general
         pygame.init()
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
-        pygame.display.set_caption('Tetris')
+        pygame.display.set_caption("Tetris")
 
         # components
         self.game = Game()
@@ -27,20 +27,19 @@ class Main:
                     pygame.quit()
                     exit()
 
-            #display
+            # display
             self.display_surface.fill(GRAY)
 
             # components
             self.game.run()
             self.score.run()
-            self.preview.run()  
+            self.preview.run()
 
             # update the game
             pygame.display.update()
             self.clock.tick()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main = Main()
     main.run()
-    
