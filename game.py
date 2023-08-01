@@ -16,9 +16,9 @@ class Game:
         self.lines_surface.set_colorkey((0, 255, 0))
         self.lines_surface.set_alpha(120)
 
-        # tetronimo
+        # tetromino
         self.field_data = [[0 for x in range(COLUMNS)] for y in range(ROWS)]
-        self.tetronimo = Tetromino(
+        self.tetromino = Tetromino(
             choice(list(TETROMINOS.keys())), 
             self.sprites, 
             self.create_new_tetromino,
@@ -50,7 +50,7 @@ class Game:
             t.update()
 
     def move_down(self):
-        self.tetronimo.move_down()
+        self.tetromino.move_down()
 
     def draw_grid(self):
         for col in range(1, COLUMNS):
@@ -76,10 +76,10 @@ class Game:
 
         if not self.timers["horizontal move"].active:
             if keys[pygame.K_LEFT]:
-                self.tetronimo.move_orizontal(-1)
+                self.tetromino.move_orizontal(-1)
                 self.timers["horizontal move"].activate()
             if keys[pygame.K_RIGHT]:
-                self.tetronimo.move_orizontal(+1)
+                self.tetromino.move_orizontal(+1)
                 self.timers["horizontal move"].activate()
 
     def run(self):
