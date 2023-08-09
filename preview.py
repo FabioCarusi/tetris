@@ -14,9 +14,11 @@ class Preview:
         self.display_surface = pygame.display.get_surface()
 
         # shapes
-        self.shape_surfaces = {shape: load(path.join('graphics',f'{shape}.png')).convert_alpha() for shape in TETROMINOS.keys()}        
+        self.shape_surfaces = {
+            shape: load(path.join('graphics',f'{shape}.png')).convert_alpha() for shape in TETROMINOS.keys()
+            }        
         
-        # image position data
+        # image position data 
         self.increment_height = self.surface.get_height() / 3
 
     def display_pieces(self, shapes):

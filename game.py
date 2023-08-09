@@ -29,7 +29,6 @@ class Game:
             )
 
         # timer
-        # self.timer = Timer()
         self.down_speed = UPDATE_START_SPEED
         self.down_speed_faster = self.down_speed * 0.3
         self.down_pressed = False
@@ -93,6 +92,15 @@ class Game:
             if keys[pygame.K_SPACE]:
                 self.tetromino.rotate()
                 self.timers['rotate'].activate()
+        
+        # down speedup
+        if not self.down_pressed and keys[pygame.K_DOWN]:
+            self.down_pressed = True
+            print("pressing down")
+
+        if self.down_pressed and not keys[pygame.K_DOWN]:
+            self.down_pressed = False
+            print('realising key')
 
     def check_finished_rows(self):
 
