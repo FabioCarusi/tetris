@@ -1,17 +1,18 @@
 from settings import *
 from random import choice
 from gametimer import Timer
-
+from sys import exit
 
 class Game:
-    def __init__(self, get_next_schape):
+    def __init__(self, get_next_schape, update_score):
         self.surface = pygame.Surface((GAME_WIDTH, GAME_HEIGHT))
         self.display_surface = pygame.display.get_surface()
         self.rect = self.surface.get_rect(topleft=(PADDING, PADDING))
         self.sprites = pygame.sprite.Group()
-        
+
         # game connaction
         self.get_next_shape = get_next_schape
+        self.update_score = update_score
 
         # lines
         self.lines_surface = self.surface.copy()
@@ -22,11 +23,11 @@ class Game:
         # tetromino
         self.field_data = [[0 for x in range(COLUMNS)] for y in range(ROWS)]
         self.tetromino = Tetromino(
-            choice(list(TETROMINOS.keys())), 
-            self.sprites, 
+            choice(list(TETROMINOS.keys())),
+            self.sprites,
             self.create_new_tetromino,
             self.field_data
-            )
+        )
 
         # timer
         self.down_speed = UPDATE_START_SPEED
@@ -39,16 +40,42 @@ class Game:
         }
         self.timers["vertical move"].activate()
 
+        # score
+        self.current_level = 1
+        self.current_score = 0
+        self.current_lines = 0
+
+    def calculate_score(self, num_lines):
+        self.current_lines += num_lines
+        self.current_score += SCORE_DATA[num_lines] * self.current_level
+
+        if self.current_lines / 10 > self.current_level:
+            self.current_level += 1
+            self.down_speed *= 0.75
+            self.down_speed_faster = self.down_speed * 0.3
+            self.timers['vertical move'].duration = self.down_speed
+            
+            print(self.timers['vertical move'].duration)
+        self.update_score(self.current_lines,
+                          self.current_score, self.current_level)
+
+    def check_game_over(self):
+        for block in self.tetromino.blocks:
+            if block.pos.y < 0:
+                print('Game over')
+                exit()
+
     def create_new_tetromino(self):
 
+        self.check_game_over()
         self.check_finished_rows()
         self.tetromino = Tetromino(
-            self.get_next_shape(), 
-            self.sprites, 
+            self.get_next_shape(),
+            self.sprites,
             self.create_new_tetromino,
             self.field_data
-            )
-    
+        )
+
     def timer_update(self):
         for t in self.timers.values():
             t.update()
@@ -70,7 +97,8 @@ class Game:
         for row in range(1, ROWS):
             y = row * CELL_SIZE
             pygame.draw.line(
-                self.lines_surface, LINE_COLOR, (0, y), (self.surface.get_width(), y)
+                self.lines_surface, LINE_COLOR, (0,
+                                                 y), (self.surface.get_width(), y)
             )
 
         self.surface.blit(self.lines_surface, (0, 0))
@@ -92,15 +120,15 @@ class Game:
             if keys[pygame.K_SPACE]:
                 self.tetromino.rotate()
                 self.timers['rotate'].activate()
-        
+
         # down speedup
         if not self.down_pressed and keys[pygame.K_DOWN]:
             self.down_pressed = True
-            print("pressing down")
+            self.timers['vertical move'].duration = self.down_speed_faster
 
         if self.down_pressed and not keys[pygame.K_DOWN]:
             self.down_pressed = False
-            print('realising key')
+            self.timers['vertical move'].duration = self.down_speed
 
     def check_finished_rows(self):
 
@@ -121,10 +149,13 @@ class Game:
                         if block and block.pos.y < deleted_row:
                             block.pos.y += 1
             # rebuild the field data
-            self.field_data = [[0 for x in range(COLUMNS)] for y in range(ROWS)]
+            self.field_data = [
+                [0 for x in range(COLUMNS)] for y in range(ROWS)]
             for block in self.sprites:
                 self.field_data[int(block.pos.y)][int(block.pos.x)] = block
 
+            # update score
+            self.calculate_score(len(deleted_rows))
 
     def run(self):
         # update
@@ -151,20 +182,22 @@ class Tetromino:
         self.field_data = field_data
 
         # create block
-        self.blocks = [Block(group, pos, self.color) for pos in self.block_position]
+        self.blocks = [Block(group, pos, self.color)
+                       for pos in self.block_position]
         # self.shape = choice([k for k in TETROMINOS ])
 
     # collision
     def next_move_horizontal_collide(self, blocks, amount):
         collision_list = [
-            block.horizontal_collide(int(block.pos.x + amount), self.field_data)
+            block.horizontal_collide(
+                int(block.pos.x + amount), self.field_data)
             for block in self.blocks
         ]
         return True if any(collision_list) else False
 
     def next_move_vertical_collide(self, blocks, amount):
         collision_list = [
-            block.vertical_collide(int(block.pos.y + amount), self.field_data) 
+            block.vertical_collide(int(block.pos.y + amount), self.field_data)
             for block in self.blocks
         ]
         return True if any(collision_list) else False
@@ -190,17 +223,18 @@ class Tetromino:
             pivot_pos = self.blocks[0].pos
 
             # 2. new block position
-            new_block_positions = [block.rotate(pivot_pos) for block in self.blocks]
+            new_block_positions = [block.rotate(
+                pivot_pos) for block in self.blocks]
 
             # 3. collision check
             for pos in new_block_positions:
                 # horizontal
                 if pos.x < 0 or pos.x >= COLUMNS:
-                    return 
+                    return
 
                 if self.field_data[int(pos.y)][int(pos.x)]:
                     return
-                
+
                 if pos.y >= ROWS:
                     return
 
@@ -224,15 +258,15 @@ class Block(pygame.sprite.Sprite):
     def horizontal_collide(self, x, field_data):
         if not 0 <= x < COLUMNS:
             return True
-        
+
         if field_data[int(self.pos.y)][x]:
             return True
 
     def vertical_collide(self, y, field_data):
         if y >= ROWS:
             return True
-        
-        if y >=0 and field_data[y][int(self.pos.x)]:
+
+        if y >= 0 and field_data[y][int(self.pos.x)]:
             return True
 
     def update(self):

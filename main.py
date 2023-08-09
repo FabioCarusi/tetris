@@ -21,9 +21,14 @@ class Main:
         print(self.next_shapes)
 
         # components
-        self.game = Game(self.get_next_shape)
+        self.game = Game(self.get_next_shape, self.update_score)
         self.score = Score()
         self.preview = Preview()
+
+    def update_score(self, lines, score, level):
+        self.score.lines = lines
+        self.score.score = score
+        self.score.level = level
     
     def get_next_shape(self):
         next_shape = self.next_shapes.pop(0)
